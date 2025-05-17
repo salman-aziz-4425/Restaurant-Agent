@@ -148,6 +148,7 @@ class Reservation(BaseAgent):
             tts=elevenlabs.TTS(voice_id=VoiceConfig.get_voice("reservation")),
             vad=silero.VAD.load(),
             tools=[update_name, update_phone, to_greeter],
+            allow_interruptions=True,
         )
 
     @function_tool()
@@ -182,6 +183,7 @@ class Takeaway(BaseAgent):
             tts=elevenlabs.TTS(voice_id=VoiceConfig.get_voice("takeaway")),
             vad=silero.VAD.load(),
             tools=[to_greeter],
+            allow_interruptions=True,
         )
 
     @function_tool()
@@ -214,6 +216,7 @@ class Checkout(BaseAgent):
             tts=elevenlabs.TTS(voice_id=VoiceConfig.get_voice("checkout")),
             vad=silero.VAD.load(),
             tools=[update_name, update_phone, to_greeter],
+             allow_interruptions=True,
         )
 
     @function_tool()

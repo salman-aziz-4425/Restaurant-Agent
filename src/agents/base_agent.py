@@ -8,7 +8,6 @@ RunContext_T = RunContext[UserData]
 
 class BaseAgent(Agent):
     async def on_enter(self) -> None:
-        """Called when entering a new agent context"""
         agent_name = self.__class__.__name__
         logger.info(f"entering task {agent_name}")
 
@@ -32,7 +31,6 @@ class BaseAgent(Agent):
         self.session.generate_reply(tool_choice="none")
 
     async def _transfer_to_agent(self, name: str, context: RunContext_T) -> tuple[Agent, str]:
-        """Handle transfer to another agent"""
         userdata = context.userdata
         current_agent = context.session.current_agent
         next_agent = userdata.agents[name]
