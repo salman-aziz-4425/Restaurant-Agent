@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: restaurant-api
+Version: 0.1.0
+Requires-Dist: fastapi>=0.115.12
+Requires-Dist: uvicorn>=0.34.2
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pydantic>=2.11.4
+Requires-Dist: PyYAML>=6.0.1
+Dynamic: requires-dist
