@@ -1,4 +1,4 @@
-# Restaurant Agent System
+# Restaurant Multi Agent System
 
 A sophisticated AI-powered restaurant management system that provides voice-interactive agents for handling reservations, takeaway orders, and payments.
 
