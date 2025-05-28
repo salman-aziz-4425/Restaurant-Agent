@@ -388,7 +388,6 @@ async def check_worker_health():
 
 @app.post("/sip/connect")
 async def create_sip_connection(request: SIPRequest):
-    """Create a new SIP connection in a LiveKit room"""
     try:
         livekit_api = LiveKitAPI(
             url=API_URL,
@@ -410,7 +409,6 @@ async def create_sip_connection(request: SIPRequest):
         return {
             "status": "success",
             "trunk_id": trunk.sip_trunk_id,
-            "name": request.room_name,
             "inbound_numbers": request.phone_numbers,
             "krisp_enabled": True
         }
@@ -423,7 +421,6 @@ async def create_sip_connection(request: SIPRequest):
 
 @app.post("/sip/dispatch-rule")
 async def create_sip_dispatch_rule(request: SIPDispatchRuleRequest):
-    """Create a new SIP dispatch rule"""
     try:
         livekit_api = LiveKitAPI(
             url=API_URL,
@@ -432,18 +429,17 @@ async def create_sip_dispatch_rule(request: SIPDispatchRuleRequest):
         )
         rule = api.SIPDispatchRule(
             dispatch_rule_individual=api.SIPDispatchRuleIndividual(
-                room_prefix=request.room_prefix
+                room_prefix=request.room_prefix,
             )
         )
         print(rule)
         dispatch_request = api.CreateSIPDispatchRuleRequest(
             rule=rule,
             trunk_ids=[request.trunk_id],
-            inbound_numbers=request.phone_numbers,
-            name=request.room_prefix
+            name=request.room_prefix,
+            
         )
 
-        # Send the request
         response = await livekit_api.sip.create_sip_dispatch_rule(dispatch_request)
         
         print(response)
@@ -469,7 +465,6 @@ async def create_sip_dispatch_rule(request: SIPDispatchRuleRequest):
 
 @app.get("/sip/dispatch-rules")
 async def list_sip_dispatch_rules():
-    """List all SIP dispatch rules"""
     try:
         livekit_api = LiveKitAPI(
             url=API_URL,
@@ -516,7 +511,6 @@ async def list_sip_dispatch_rules():
 
 @app.get("/sip/inbound-trunk")
 async def list_inbound_trunks():
-    """List all SIP inbound trunks"""
     try:
         livekit_api = LiveKitAPI(
             url=API_URL,
@@ -526,6 +520,8 @@ async def list_inbound_trunks():
 
         request = api.ListSIPInboundTrunkRequest()
         response = await livekit_api.sip.list_sip_inbound_trunk(request)
+
+        print(response)
         
         # Convert response items to dictionary format
         items = []
@@ -550,7 +546,6 @@ async def list_inbound_trunks():
 
 @app.delete("/sip/dispatch-rule/{sip_dispatch_rule_id}")
 async def delete_sip_dispatch_rule(sip_dispatch_rule_id: str):
-    """Delete a SIP dispatch rule"""
     try:
         livekit_api = LiveKitAPI(
             url=API_URL,
@@ -572,6 +567,35 @@ async def delete_sip_dispatch_rule(sip_dispatch_rule_id: str):
         }
     except Exception as e:
         logger.error(f"Error deleting SIP dispatch rule: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'livekit_api' in locals():
+            await livekit_api.aclose()
+
+@app.delete("/sip/inbound-trunk/{sip_trunk_id}")
+async def delete_inbound_trunk(sip_trunk_id: str):
+    """Delete a SIP inbound trunk"""
+    try:
+        livekit_api = LiveKitAPI(
+            url=API_URL,
+            api_key=LIVEKIT_API_KEY,
+            api_secret=LIVEKIT_API_SECRET
+        )
+
+        request = api.DeleteSIPTrunkRequest(
+            sip_trunk_id=sip_trunk_id
+        )
+
+        response = await livekit_api.sip.delete_sip_trunk(request)
+        
+        logger.info(f"Deleted SIP inbound trunk: {sip_trunk_id}")
+        
+        return {
+            "status": "success",
+            "message": f"Successfully deleted inbound trunk {sip_trunk_id}"
+        }
+    except Exception as e:
+        logger.error(f"Error deleting SIP inbound trunk: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if 'livekit_api' in locals():
