@@ -130,6 +130,22 @@ class SIPDispatchRuleRequest(BaseModel):
     phone_numbers: List[str]
     name: str
 
+class SIPOutboundTrunkRequest(BaseModel):
+    room_name: str
+    phone_numbers: List[str]
+    auth_username: Optional[str] = None
+    auth_password: Optional[str] = None
+    sip_url: Optional[str] = None
+
+class SIPParticipantRequest(BaseModel):
+    sip_trunk_id: str
+    sip_call_from: str
+    sip_call_to: str
+    room_name: str
+    participant_identity: str
+    participant_name: str
+    play_dialtone: Optional[bool] = True
+
 def get_session(session_id: str) -> UserData:
     if session_id not in sessions:
         sessions[session_id] = UserData()
@@ -473,7 +489,7 @@ async def list_sip_dispatch_rules():
         )
 
         response = await livekit_api.sip.list_sip_dispatch_rule(api.ListSIPDispatchRuleRequest())
-        
+        print(response)
         items = []
         for rule in response.items:
             items.append({
@@ -596,6 +612,111 @@ async def delete_inbound_trunk(sip_trunk_id: str):
         }
     except Exception as e:
         logger.error(f"Error deleting SIP inbound trunk: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'livekit_api' in locals():
+            await livekit_api.aclose()
+
+
+@app.post("/sip/outbound-trunk")
+async def create_outbound_trunk(request: SIPOutboundTrunkRequest):
+    try:
+        livekit_api = LiveKitAPI(
+            url=API_URL,
+            api_key=LIVEKIT_API_KEY,
+            api_secret=LIVEKIT_API_SECRET
+        )
+
+        trunk = api.SIPOutboundTrunkInfo(
+            name = request.room_name,
+            transport=api.SIPTransport.SIP_TRANSPORT_UDP,
+            numbers = request.phone_numbers,
+            auth_username = request.auth_username,
+            auth_password = request.auth_password,
+            address=request.sip_url,
+            
+        )
+
+        request = api.CreateSIPOutboundTrunkRequest(
+            trunk = trunk
+        )
+
+        response = await livekit_api.sip.create_sip_outbound_trunk(request)
+        
+        print(response)
+        
+        return {
+            "status": "success",
+            "trunk_id": response.sip_trunk_id,
+        }
+    except Exception as e:
+        logger.error(f"Error creating SIP outbound trunk: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'livekit_api' in locals():
+            await livekit_api.aclose()
+
+
+@app.delete("/sip/outbound-trunk/{sip_trunk_id}")
+async def delete_outbound_trunk(sip_trunk_id: str):
+    try:
+        livekit_api = LiveKitAPI(
+            url=API_URL,
+            api_key=LIVEKIT_API_KEY,
+            api_secret=LIVEKIT_API_SECRET
+        )
+        request = api.DeleteSIPTrunkRequest(
+            sip_trunk_id=sip_trunk_id
+        )
+        response = await livekit_api.sip.delete_sip_trunk(request)
+        print(response)
+        return {
+            "status": "success",
+            "message": f"Successfully deleted outbound trunk {sip_trunk_id}"
+        }
+    except Exception as e:
+        logger.error(f"Error deleting SIP outbound trunk: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+@app.post("/sip/participant")
+async def create_sip_participant(request: SIPParticipantRequest):
+    try:
+        livekit_api = LiveKitAPI(
+            url=API_URL,
+            api_key=LIVEKIT_API_KEY,
+            api_secret=LIVEKIT_API_SECRET
+        )
+
+        sip_request = api.CreateSIPParticipantRequest(
+            sip_trunk_id=request.sip_trunk_id,
+            sip_number=request.sip_call_from,
+            sip_call_to=request.sip_call_to,
+            room_name=request.room_name,
+            participant_identity=request.participant_identity,
+            participant_name=request.participant_name,
+            play_dialtone=request.play_dialtone,
+            wait_until_answered=True,
+        )
+
+        response = await livekit_api.sip.create_sip_participant(sip_request)
+        
+        print(response)
+        logger.info(f"Created SIP participant in room {request.room_name}")
+        
+        return {
+            "status": "success",
+            "participant": {
+                "participant_id": response.participant_id,
+                "room_name": request.room_name,
+                "participant_identity": request.participant_identity,
+                "participant_name": request.participant_name
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error creating SIP participant: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if 'livekit_api' in locals():

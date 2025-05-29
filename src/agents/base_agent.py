@@ -14,7 +14,6 @@ class BaseAgent(Agent):
         userdata: UserData = self.session.userdata
         chat_ctx = self.chat_ctx.copy()
 
-
         if isinstance(userdata.prev_agent, Agent):
             truncated_chat_ctx = userdata.prev_agent.chat_ctx.copy(
                 exclude_instructions=True, exclude_function_call=False
@@ -37,3 +36,4 @@ class BaseAgent(Agent):
         userdata.prev_agent = current_agent
 
         return next_agent, f"Transferring to {name}." 
+    

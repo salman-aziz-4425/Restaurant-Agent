@@ -22,7 +22,6 @@ if not LIVEKIT_URL:
 if not LIVEKIT_URL.startswith(("wss://", "ws://", "https://", "http://")):
     LIVEKIT_URL = f"wss://{LIVEKIT_URL}"
 
-# Extract host without protocol
 LIVEKIT_HOST = LIVEKIT_URL.replace("wss://", "").replace("ws://", "").replace("https://", "").replace("http://", "").strip()
 
 async def entrypoint(ctx: agents.JobContext):
@@ -66,10 +65,7 @@ async def entrypoint(ctx: agents.JobContext):
         raise
 
 if __name__ == "__main__":
-    print(f"LIVEKIT_URL (computed): {LIVEKIT_URL}")
     _parsed = urllib.parse.urlparse(LIVEKIT_URL)
-    print("Parsed URL -> scheme:", _parsed.scheme, "netloc:", _parsed.netloc, "path:", _parsed.path)
-    print(f"Using LiveKit host: {LIVEKIT_HOST}")
     options = agents.WorkerOptions(
         entrypoint_fnc=entrypoint,
         agent_name="",
